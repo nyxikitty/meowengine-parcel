@@ -1,7 +1,7 @@
 # MeowEngine Parcel
 
-## ⚠️ Important Notice
-### This project is being actively revived to ensure compatibility with the latest Bullet Force update, which introduces support for FishNet Unity Networking. Development is underway to update the mod base accordingly.
+## ✅ FishNet Migration Complete
+### This project has been successfully migrated from Photon Networking to FishNet Unity Networking to ensure compatibility with the latest Bullet Force update. The mod base now fully supports FishNet protocol.
 
 ## Table of Contents
 - [Disclaimer](#disclaimer)
@@ -40,19 +40,32 @@ MeowEngine Parcel has been completely redesigned using Parcel bundler to deliver
 
 ## SDK
 
-MeowEngine includes a custom SDK for calling "mock" functions rebuilt in JavaScript from PhotonNetwork. This SDK implements a JavaScript version of networking functionality similar to Photon Network with the following key components:
+MeowEngine includes a custom SDK for networking functionality. The project has been migrated from Photon to FishNet Unity Networking:
 
-- **Core Structure**: Organized into modules like `InitOperations`, `PairCalculation`, `LoadBalancingClient`, and `Networking`
-- **Network Communication**: Implements websocket connections to Photon servers
-- **Cryptography Layer**: Features extensive encryption/decryption methods for various data types (integers, strings, vectors, etc.)
-- **Configuration Options**: Includes debug mode flags and development settings
+### FishNet Implementation
+- **Protocol Support**: JSON and binary message formats
+- **Message Types**: Connection management, authentication, RPC calls, object spawning, transform sync
+- **Network Communication**: WebSocket connections to FishNet servers
+- **Cryptography Layer**: Encryption/decryption methods for game data (integers, strings, vectors, etc.)
+- **Configuration Options**: Debug mode flags and development settings
+- **API Compatibility**: Maintains backward compatibility with Photon-style networking patterns
 
-This custom implementation allows developers to use familiar Photon-style networking patterns while running in JavaScript environments.
+### Legacy Photon Support
+The original Photon networking code is preserved in the `/src/Photon` directory for reference, but the active implementation now uses FishNet (`/src/FishNet`).
 
 ![image](https://github.com/user-attachments/assets/51f54ed4-5392-4802-9a7c-da952a107cb5)
 
 ## Network Patches
-- Check [Patching File](https://github.com/cyberarchives/meowengine-parcel/blob/main/src/MeowEngine/Patching/Entry.js) for more details
+
+### FishNet Patches
+- **Location**: `/src/FishNet/Patching/FishNetPatching.js`
+- **Incoming Messages**: Intercepts and processes FishNet messages (RPC calls, object spawns, transform sync, etc.)
+- **Outgoing Messages**: Modifies outgoing messages for spoofing player data, platform, rank, etc.
+- **Player Management**: Tracks player state, positions, and statistics in real-time
+
+### Legacy Photon Patches
+- **Location**: `/src/MeowEngine/Patching/Entry.js` (preserved for reference)
+- The original Photon implementation has been replaced with FishNet
 
 ## Project Structure
 
@@ -74,6 +87,21 @@ meowengine-parcel/
 │   │   │   ├── EventEmitter.ts
 │   │   │   └── GameUtils.ts
 │   │   └── GlobalTypeDefs.ts
+│   ├── FishNet/                      # NEW: FishNet networking implementation
+│   │   ├── Enums/
+│   │   │   ├── MessageType.js
+│   │   │   ├── Channel.js
+│   │   │   └── Target.js
+│   │   ├── Protocol/
+│   │   │   ├── ProtocolReader.js
+│   │   │   └── ProtocolWriter.js
+│   │   ├── Handlers/
+│   │   │   ├── OnMessageHandler.js
+│   │   │   └── SendMessageHandler.js
+│   │   ├── Patching/
+│   │   │   └── FishNetPatching.js
+│   │   ├── FishNetClient.js
+│   │   └── FishNetSocketManager.js
 │   ├── Bullet Force/
 │   │   ├── API/
 │   │   │   ├── Account.ts

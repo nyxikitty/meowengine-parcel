@@ -8,13 +8,27 @@ interface PhotonServerSettings {
     Region: string;
 }
 
+interface FishNetServerSettings {
+    Protocol: string;
+    Address: string;
+    Port: number;
+    AppVersion: string;
+    Region: string;
+}
+
 interface SDKType {
     Account: any;
     FairCollection: any;
     PhotonServerSettings: PhotonServerSettings;
+    FishNetServerSettings: FishNetServerSettings;
 }
 
 interface PhotonClientType {
+    Instance: any;
+    gameSocket: any;
+}
+
+interface FishNetClientType {
     Instance: any;
     gameSocket: any;
 }
@@ -101,6 +115,7 @@ interface LogType {
 interface LocalPlayerType {
     ActorNr: number;
     ViewId: number;
+    ObjectId: number;
     Username: string;
     Position: Position;
     Rotation: Rotation;
@@ -133,6 +148,7 @@ interface PerformancePanelType {
 interface MeowEngineType {
     SDK: SDKType;
     PhotonClient: PhotonClientType;
+    FishNetClient?: FishNetClientType;
     FairCollection: FairCollectionType;
     Networking: NetworkingType;
     LoadBalancingClient: LoadBalancingClientType;
@@ -157,9 +173,20 @@ export const MeowEngine: MeowEngineType = {
             AppId: "8c2cad3e-2e3f-4941-9044-b390ff2c4956",
             AppVersion: "1.104.5_HC_1.105",
             Region: "eu/*",
+        },
+        FishNetServerSettings: {
+            Protocol: "FishNet",
+            Address: "game-us-2.blayzegames.com",
+            Port: 51000,
+            AppVersion: "1.0.0",
+            Region: "us/*",
         }
     },
     PhotonClient: {
+        Instance: null,
+        gameSocket: null,
+    },
+    FishNetClient: {
         Instance: null,
         gameSocket: null,
     },
@@ -214,6 +241,7 @@ export const MeowEngine: MeowEngineType = {
     LocalPlayer: {
         ActorNr: 1,
         ViewId: 1001,
+        ObjectId: -1,
         Username: "",
         Position: { x: 0, y: 0, z: 0 },
         Rotation: { w: 0, x: 0, y: 0, z: 0 },
