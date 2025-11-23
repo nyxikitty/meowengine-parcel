@@ -81,32 +81,35 @@ export class FishNetSocketManager {
     try {
       const data = args[0];
 
-      // Parse the outgoing message
-      const reader = new ProtocolReader(data);
-      const message = reader.getMessage();
-
+      // FishNet uses its own binary protocol - don't try to parse it
+      // Just pass it through and log that we sent it
       if (MeowEngine.Config.debugOutgoingPackets) {
-        console.log('[FishNet] Outgoing message:', message);
+        const size = data instanceof ArrayBuffer ? data.byteLength : (data.length || 0);
+        console.log(`[FishNet] Outgoing packet (${size} bytes)`);
       }
 
-      // Emit event for patches to intercept
+      // Emit event for patches to intercept (pass raw data)
       if (window.MeowEngine?.Events?.OpRaiseEvent) {
         window.MeowEngine.Events.OpRaiseEvent.emit('data', {
-          message,
-          reader,
-          socket,
-          originalSend,
-          args
+          data: data,
+          socket: socket,
+          originalSend: originalSend,
+          args: args,
+          raw: true
         });
       }
 
-      // Cache outgoing packets if enabled
+      // Cache outgoing packets if enabled (store raw data)
       if (MeowEngine.Config.cacheOutgoingPhotonPackets) {
         const roomKey = FishNetSocketManager.getRoomKey();
         if (!MeowEngine.RoomInstance.CachedOutgoingPackets[roomKey]) {
           MeowEngine.RoomInstance.CachedOutgoingPackets[roomKey] = [];
         }
-        MeowEngine.RoomInstance.CachedOutgoingPackets[roomKey].push(message);
+        MeowEngine.RoomInstance.CachedOutgoingPackets[roomKey].push({
+          timestamp: Date.now(),
+          size: data instanceof ArrayBuffer ? data.byteLength : (data.length || 0),
+          raw: true
+        });
       }
 
       FishNetSocketManager.packetCount++;
@@ -114,7 +117,7 @@ export class FishNetSocketManager {
       console.error('[FishNet] Error handling outgoing message:', error);
     }
 
-    // Send the original message
+    // Send the original message (pass through unmodified)
     originalSend.apply(socket, args);
   }
 
@@ -125,45 +128,34 @@ export class FishNetSocketManager {
     try {
       const data = event.data;
 
-      // Parse the incoming message
-      const reader = new ProtocolReader(data);
-      const message = reader.getMessage();
-
+      // FishNet uses its own binary protocol - don't try to parse it
+      // Just pass it through and log that we received it
       if (MeowEngine.Config.debugIncomingPackets) {
-        console.log('[FishNet] Incoming message:', message);
+        const size = data instanceof ArrayBuffer ? data.byteLength : data.length;
+        console.log(`[FishNet] Incoming packet (${size} bytes)`);
       }
 
-      // Update connection info on first approved connection
-      if (FishNetSocketManager.firstPacket && message.type === MessageType.CONNECTION_APPROVED) {
-        FishNetSocketManager.firstPacket = false;
-        if (message.data.connectionId) {
-          fishNetClient.setConnectionId(message.data.connectionId);
-        }
-        if (message.data.clientId) {
-          fishNetClient.setClientId(message.data.clientId);
-        }
-      }
-
-      // Emit event for patches to intercept
+      // Emit event for patches to intercept (pass raw data)
       if (window.MeowEngine?.Events?.OnEvent) {
         window.MeowEngine.Events.OnEvent.emit('data', {
-          message,
-          reader,
-          event
+          data: data,
+          event: event,
+          raw: true
         });
       }
 
-      // Cache incoming packets if enabled
+      // Cache incoming packets if enabled (store raw data)
       if (MeowEngine.Config.cacheIncomingPhotonPackets) {
         const roomKey = FishNetSocketManager.getRoomKey();
         if (!MeowEngine.RoomInstance.CachedIncomingPackets[roomKey]) {
           MeowEngine.RoomInstance.CachedIncomingPackets[roomKey] = [];
         }
-        MeowEngine.RoomInstance.CachedIncomingPackets[roomKey].push(message);
+        MeowEngine.RoomInstance.CachedIncomingPackets[roomKey].push({
+          timestamp: Date.now(),
+          size: data instanceof ArrayBuffer ? data.byteLength : data.length,
+          raw: true
+        });
       }
-
-      // Handle specific message types
-      FishNetSocketManager.handleMessageType(message, fishNetClient);
 
       FishNetSocketManager.packetCount++;
     } catch (error) {
