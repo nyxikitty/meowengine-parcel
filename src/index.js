@@ -11,6 +11,9 @@ import ConsoleFilter from "./MeowEngine/Patching/ConsoleFilter";
 import Patching from "./MeowEngine/Patching/Entry";
 import HttpRequestManager from "./Photon/HttpRequestManager";
 import SocketManager from "./Photon/SocketManager";
+// FishNet imports
+import { FishNetSocketManager } from "./FishNet/FishNetSocketManager";
+import { FishNetPatching } from "./FishNet/Patching/FishNetPatching";
 
 // Return if not in the right iFrame
 if (
@@ -38,14 +41,15 @@ GameUtils.waitForUnityInstance((instance) => {
   MeowEngine.FairCollection.InitOperation = FairCollection.InitOperation;
   MeowEngine.FairCollection.Instance = FairCollection;
 
-  // Override socket to add Photon reading and writing logic
-  SocketManager.overrideSocket();
+  // Override socket to add FishNet reading and writing logic
+  // NOTE: Switched from Photon to FishNet networking
+  FishNetSocketManager.overrideSocket();
 
   // Initialize the Http Request Manager
   HttpRequestManager.initialize();
 
-  // Initialize network patches
-  Patching.initPatches();
+  // Initialize network patches (FishNet version)
+  FishNetPatching.initPatches();
 
   // Initialize UI
   // TODO: Remove the example UI elements and add a proper UI and features
