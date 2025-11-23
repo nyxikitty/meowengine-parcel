@@ -25,56 +25,15 @@ export class FishNetPatching {
     // ========================================
     // OUTGOING MESSAGE PATCHES
     // ========================================
-    SendMessage.addListener("data", async ({ args, data, socket, originalSend }) => {
+    SendMessage.addListener("data", async ({ args, data, socket, originalSend, raw }) => {
       try {
-        const message = data;
-
-        if (MeowEngine.Config.debugOutgoingPackets) {
-          console.log('[FishNet] Outgoing message:', message);
+        // FishNet uses proprietary binary protocol - we can't easily parse/modify it
+        // Just pass through for now
+        if (MeowEngine.Config.debugOutgoingPackets && !raw) {
+          console.log('[FishNet] Outgoing packet intercepted (passing through)');
         }
 
-        // Cache outgoing messages if enabled
-        if (MeowEngine.Config.cacheOutgoingPhotonPackets) {
-          const roomKey = FishNetPatching.getRoomKey();
-          if (!MeowEngine.RoomInstance.CachedOutgoingPackets[roomKey]) {
-            MeowEngine.RoomInstance.CachedOutgoingPackets[roomKey] = [];
-          }
-          MeowEngine.RoomInstance.CachedOutgoingPackets[roomKey].push(message);
-        }
-
-        // Handle authentication message
-        if (message.type === MessageType.AUTHENTICATE) {
-          console.log('[FishNet] Authentication message detected');
-          // Store server settings from authentication
-          if (message.data) {
-            const serverSettings = MeowEngine.SDK.FishNetServerSettings;
-            if (message.data.region) serverSettings.Region = message.data.region;
-            if (message.data.version) serverSettings.AppVersion = message.data.version;
-          }
-        }
-
-        // Handle RPC messages (similar to OpRaiseEvent)
-        if (message.type === MessageType.RPC_RELIABLE || message.type === MessageType.RPC_UNRELIABLE) {
-          const modified = FishNetPatching.handleOutgoingRPC(message, socket, originalSend, args);
-          if (modified) {
-            return; // Message was modified and sent, don't send original
-          }
-        }
-
-        // Handle transform sync messages
-        if (message.type === MessageType.TRANSFORM_SYNC) {
-          // Update local player position if this is their transform
-          if (message.data.objectId === MeowEngine.LocalPlayer.ObjectId) {
-            if (message.data.position) {
-              MeowEngine.LocalPlayer.Position = message.data.position;
-            }
-            if (message.data.rotation) {
-              MeowEngine.LocalPlayer.Rotation = message.data.rotation;
-            }
-          }
-        }
-
-        // Send original message
+        // No modifications - just pass through
         return originalSend.apply(socket, args);
       } catch (error) {
         console.error('[FishNet] Error in outgoing message patch:', error);
@@ -85,29 +44,17 @@ export class FishNetPatching {
     // ========================================
     // INCOMING MESSAGE PATCHES
     // ========================================
-    OnMessage.addListener("data", (event) => {
+    OnMessage.addListener("data", ({ data, event, raw }) => {
       try {
-        if (!event.data) return;
+        if (!data) return;
 
-        // Parse incoming message
-        const reader = new ProtocolReader(event.data);
-        const message = reader.getMessage();
-
-        if (MeowEngine.Config.debugIncomingPackets) {
-          console.log('[FishNet] Incoming message:', message);
+        // FishNet uses proprietary binary protocol - we can't easily parse it
+        // Just monitor for now
+        if (MeowEngine.Config.debugIncomingPackets && !raw) {
+          console.log('[FishNet] Incoming packet intercepted (monitoring)');
         }
 
-        // Cache incoming messages if enabled
-        if (MeowEngine.Config.cacheIncomingPhotonPackets) {
-          const roomKey = FishNetPatching.getRoomKey();
-          if (!MeowEngine.RoomInstance.CachedIncomingPackets[roomKey]) {
-            MeowEngine.RoomInstance.CachedIncomingPackets[roomKey] = [];
-          }
-          MeowEngine.RoomInstance.CachedIncomingPackets[roomKey].push(message);
-        }
-
-        // Handle specific message types
-        FishNetPatching.handleIncomingMessage(message);
+        // No processing - just monitor
       } catch (error) {
         console.error('[FishNet] Error in incoming message patch:', error);
       }

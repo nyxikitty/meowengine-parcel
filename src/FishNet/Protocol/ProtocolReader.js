@@ -66,10 +66,13 @@ export class ProtocolReader {
       return this.parsedMessage;
     }
 
+    // FishNet uses its own binary protocol - just return raw data
+    // Don't try to parse it as it uses Unity's serialization system
     return {
-      type: this.readMessageType(),
-      timestamp: this.readTimestamp(),
-      data: this.readData()
+      type: 'BINARY',
+      timestamp: Date.now(),
+      data: this.buffer,
+      raw: true
     };
   }
 
@@ -208,7 +211,7 @@ export class ProtocolReader {
       case 11: return this.readArray();
       case 12: return this.readDictionary();
       default:
-        console.warn('Unknown type byte:', typeByte);
+        // FishNet uses many custom type bytes - don't warn, just return null
         return null;
     }
   }
